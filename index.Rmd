@@ -1,18 +1,28 @@
 ---
-title: "My Final Project Template"
-author: Your name here
-subtitle: Subtitle here if desired
+title: "Predicting Drivers of Common Buckthorn"
+author: Sean Colby
+subtitle: Generation of a Buckthorn SDM
 ---
 
 # Introduction
 
-[~ 200 words]
+Common Buckthorn
 
-Clearly stated background and questions / hypotheses / problems being addressed. Sets up the analysis in an interesting and compelling way.
+Background: 
+Common Buckthorn is a deciduous tree/shrub species which was introduced in the late 1800's as an ornamental from Eurasia (Knight et al. 2007). While it may have served a role as an ornamental, it has done a large amount of ecological harm to the Northeastern United States and South East Canada. For example, Common Buckthorn has been known to more than double nitrogen and organic matter content in soils compared to native vegetation resulting in decreased habitat diversity (Klionsky et al. 2011). Furthermore, since Buckthorn is highly competitive having a higher growth rate and fecundity than most native shrubs, it is then able to become quickly become a monoculture and out shade native species. To make matters worse, Buckthorn is allelopathic and reduces native species richness and native biomass production (Warren et al. 2017). 
+
+
+Problem:
+Due to Common Buckthorn being extremely damaging to native ecosystems it is imperative to model its spread in order to attempt to control it. While many researchers have done large multiple state prediction models of Common Buckthorn, to my knowledge very few have done a small scale single state SDM.
+
+
+Questions: 
+1. Will this small scale of an SDM be relatively accurate? 
+2. What can we make of the plot as to what forests/areas appear to be more likely to be invaded than others?
+3. Since we are focusing on habitat suitability, is buckthorn's presence more likely due to habitat suitability or dispersal methods?
+
 
 # Materials and methods
-
-[~ 200 words]
 
 Narrative: Clear narrative description of the data sources and methods. Includes data from at least two sources that were integrated / merged in R.
 
