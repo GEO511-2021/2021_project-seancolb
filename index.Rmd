@@ -24,7 +24,30 @@ Questions:
 
 # Materials and methods
 
-Narrative: Clear narrative description of the data sources and methods. Includes data from at least two sources that were integrated / merged in R.
+Study Area: 
+This study area is made up of 160 sites that were randomly selected from the following New York counties; Monroe, Livingston, Wyoming, and Ontario. Using these sites, environmental variables of soil, climatic, vegetation, and topographic data were collected.
+
+```{r}
+#Load Library
+library(spData)
+library(tidyverse)
+library(sf)
+
+#Load Sites
+sites<-read.csv("160_Sites.csv")%>%
+st_as_sf(coords= c("longitude","ï..latitude"),crs=4326)
+data(us_states)
+NY= us_states[us_states$NAME == "New York",]
+NY_SF<-st_as_sf(NY)
+
+ggplot(NY_SF, col = "grey95")+
+  geom_sf()+
+  geom_sf(data= sites, pch=4)
+```
+
+Methods:
+
+Generating Logistic Regression to Find Predictors for SDM
 
 Code: The code associated with the project is well organized and easy to follow. Demonstrates mastery of R graphics and functions.
 
