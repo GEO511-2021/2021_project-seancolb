@@ -81,48 +81,164 @@ Buckthorn_only <- read.csv("Buckthorn_only.csv")
 
 #Create Linear Model using what variables are believed to be best
 Buckthorn <- lm(formula = X.Buckthorn~temp0509+nonveg.100+Canopy.Cover, data= Buckthorn_only)
-knitr::opts_chunk$set(cache=TRUE)  # cache the results for quick compiling
+knitr::opts_chunk$set(cache=TRUE)  
 ```
 
-## Download and clean all required data
+## Download Data from Open Source and Generate Predictive Model
 ```{r}
-n=20
-data=data.frame(x=runif(n,-180,180),
-                y=runif(n,-60,60),
-                size = runif(n, 5, 20),
-                category = factor(
-                  sample(letters[1:5], n, replace = TRUE)
-                  ),
-                value = rnorm(n))
+#Load Libraries
+library(sp)
+library(sf)
+library(spData)
+library(raster)
+library(maptools)
+library(rgdal)
+library(dismo)
+library(tidyverse)
+library(FedData)
+
+#Set Boundaries of Base Map
+data(us_states)
+NY= us_states[us_states$NAME == "New York",]
+
+#Download Environmental Data
+bioclim.data <- getData(name = "worldclim",
+                        var = "bio",
+                        res = 2.5,)
+
+#Crop the Climatic data only to the extent of the occurences
+bioclim.data <- crop(x = bioclim.data, y = NY)%>%mask(mask=NY)
+
+#Read in Occurrence Data
+Occurence <- read.csv("Buckthorn_Occurence.csv")%>%
+st_as_sf(coords= c("longitude","latitude"),crs=4326)
+
+#Add long+lat back into Occurence
+Occurence[,c("longitude","latitude")]= st_coordinates(Occurence)
+
+#Begin to build distribution model
+bc.model <- bioclim(x = bioclim.data, p = st_coordinates(Occurence))
+
+# Drop unused column
+obs.data <- Occurence[, c("latitude", "longitude")]
+
+# Reverse order of columns
+obs.data <- obs.data[, c("longitude", "latitude")]
+
+# Build species distribution model
+bc.model <- bioclim(x = bioclim.data, p = st_coordinates(obs.data))
+
+#Predict estimated presence
+predict.presence <- dismo::predict(object = bc.model, 
+                                   x = bioclim.data, 
+                                   ext = NY)
+
+#Make Predict Presence a data frame for ggplot 2
+prediction<-as.data.frame(predict.presence, xy=TRUE)
+
+# Generate random points/pseudo absence points
+bil.files <- list.files(path = "wc2-5/", 
+                        pattern = "*.bil$", 
+                        full.names = TRUE)
+
+mask <- raster(bil.files[1])
+
+set.seed(20210707)
+
+#Insert Random Points over specified area
+background <- randomPoints(mask = mask,
+                           n= nrow(obs.data),
+                           ext = NY,
+                           extf = 1.25)
+
+#Save random points as data frame
+
+Pseudo<- as.data.frame(background)
+
+#This sets equal groups for testing
+
+testing.group <- 1
+
+group.presence <- kfold(x = obs.data, k = 5)
+
+
+#Set Training and Testing Groups
+
+presence.train <- obs.data[group.presence != testing.group, ]
+
+presence.test <- obs.data[group.presence == testing.group, ]
+
+#Training and testing for pseudo points
+
+group.background <- kfold(x = background, k = 5)
+
+background.train <- background[group.background != testing.group, ]
+
+background.test <- background[group.background == testing.group, ]
+
+
+#Build model using training
+bc.model <- bioclim(x = bioclim.data, p = st_coordinates(presence.train))
+predict.presence <- dismo::predict(object = bc.model, 
+                                   x = bioclim.data, 
+                                   ext = NY)
+
+predict.presence_df<- as.data.frame(predict.presence)
+#Testing and Evaluation
+bc.eval <- evaluate(p = presence.test,   # The presence testing data
+                    a = background.test, # The absence testing data
+                    model = bc.model,    # The model we are evaluating
+                    x = bioclim.data)    # Climatic variables for use by model
+
+# Determine minimum threshold for "presence"
+bc.threshold <- threshold(x = bc.eval, stat = "spec_sens")
+
+Presence_Absence= predict.presence > bc.threshold
 ```
 
-```{r, results='asis'}
-data %>% 
-  slice(1:10) %>% #show only 1:n rows
-  kable(digits=2,align="c")%>% #make table and round to two digits
-  kable_styling(bootstrap_options = 
-                  c("striped", "hover", "condensed", "responsive")) #apply other formatting
-```
 
-Add any additional processing steps here.
 
 # Results
 
-USE SUMMARY FUNCTION OF BOTH LOGISITC AND LINEAR REGRESSIONS
 
-```{r, fig.width=6, fig.height=3, fig.cap="Map of completely random data"}
-m <- leaflet(data) %>% 
-  addTiles() %>% 
-  addCircleMarkers(~x, ~y, radius = ~size,color = ~as.factor(category)) %>% 
-  addPopups(~x[2], ~y[2], "Random popup")
-m  # a map with the default OSM tile layer
+##Logistic Regression Results
+```{r}
+summary(Buckthorn_All)
 ```
 
-USE GGPLOT OF SDM FUNCTION
+##Linear Regression Results
 ```{r}
-data %>% 
-  ggplot(aes(x=x,y=y,col=category))+
-  geom_point()
+summary(Buckthorn)
+```
+
+##Initial SDM Setup
+```{r}
+ggplot(NY,col = "grey95")+
+  geom_sf()+
+  geom_sf(data=Occurence, size=1, color="black")+
+  geom_raster(data=prediction, aes(x = x, y = y, fill= layer), alpha=.65)+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  ggtitle("Buckthorn SDM of NY")+
+  xlab("longitude")+
+  ylab("latitude")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+##Trained and Evaluated Model with Set Threshold
+```{r}
+ggplot(NY,col = "grey95")+
+  geom_sf()+
+  geom_sf(data=Occurence, size=1, color="black")+
+  geom_raster(data= as.data.frame(Presence_Absence, xy=T), aes(x = x, y = y, fill= layer))+
+  #scale_fill_gradientn(colours = terrain.colors(7))+
+  ggtitle("Buckthorn SDM of NY")+
+  xlab("longitude")+
+  ylab("latitude")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+##Model Stats Summary
+```{r}
+view(bc.eval)
 ```
 
 # Conclusions
