@@ -201,17 +201,17 @@ Presence_Absence= predict.presence > bc.threshold
 # Results
 
 
-##Logistic Regression Results
+## Logistic Regression Results
 ```{r}
 summary(Buckthorn_All)
 ```
 
-##Linear Regression Results
+## Linear Regression Results
 ```{r}
 summary(Buckthorn)
 ```
 
-##Initial SDM Setup
+## Initial SDM Setup
 ```{r}
 ggplot(NY,col = "grey95")+
   geom_sf()+
@@ -224,7 +224,7 @@ ggplot(NY,col = "grey95")+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-##Trained and Evaluated Model with Set Threshold
+## Trained and Evaluated Model with Set Threshold
 ```{r}
 ggplot(NY,col = "grey95")+
   geom_sf()+
@@ -236,17 +236,20 @@ ggplot(NY,col = "grey95")+
   ylab("latitude")+
   theme(plot.title = element_text(hjust = 0.5))
 ```
-##Model Stats Summary
+## Model Stats Summary
 ```{r}
 view(bc.eval)
 ```
 
 # Conclusions
 
-[~200 words]
+## Logistic Regression and Linear Regression
+Looking at the regressions generated it is clear that the best indicators of buckthorn's presence are compaction, clay, slope, and pH. However, of those predictors the most significant were compaction and slope as they contained p-values less than .05 (0.0446 and .0387 respectively). Additionally, the best variables determining relative abundance within sites were non-forested area, canopy coverage, and temperature. 
 
-Clear summary adequately describing the results and putting them in context. Discussion of further questions and ways to continue investigation.
+## Buckthorn SDM
+In the current state of the model no conclusion can be drawn due to the model only including temperature and precipitation as variables for habitat suitability. 
+
 
 # References
 
-All sources are cited in a consistent manner
+Trust me bro
