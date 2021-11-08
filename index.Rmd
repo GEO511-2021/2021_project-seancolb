@@ -49,36 +49,38 @@ Methods:
 
 Generating Logistic Regression to Find Predictors for SDM
 
-Code: The code associated with the project is well organized and easy to follow. Demonstrates mastery of R graphics and functions.
+Data for Logistic Regression: 
+(FIll in Later)
 
-Data: The underlying data are publicly accessible via the web and downloaded/accessed within the Rmd script. If you want to use your own data, you must make it available on a website (e.g. Figshare) so that others are able to re-run your code.
-
-You can do bullets like this:
-
-* The first most important thing
-* The second most important thing
-* The third most important thing
-
-You can do numbers like this:
-
-1. The first most important thing
-2. The second most important thing
-3. The third most important thing
-
-See [http://rmarkdown.rstudio.com/](http://rmarkdown.rstudio.com/) for all the amazing things you can do.
-
-
-Here's my first code chunk.
+Logisitic Regression Codes:
 ```{r}
-1+2
+#Load in Libraries
+library(tidyverse)
+library(stats)
+
+#Read in Data
+Buckthorn_All_Sites <- read.csv("All_Sites.csv")
+
+#Calculate Logistic Regression Using What Variables are believed to be best
+Buckthorn_All <- glm(formula= Buckthorn~temp0509+GR0.50+Compaction+Clay+terrain.slope+pH,data=Buckthorn_All_Sites, family="binomial")
+
+#Note that you must type in each variable and play with testing variables that both make the most sense as well as yield the best p-value. 
+
 ```
 
-Load any required packages in a code chunk (you may need to install some packages):
+Using the same stats package to fit linear models and predict what controls Common Buckthorn's relative abundance
+-*Note* this is an additional test to not only create a habitat suitability model of buckthorn, but to also see what environmental variable increases abundance beyond just presence absence. 
 
 ```{r, message=F, warning=F}
+#Load in the Libraries
 library(tidyverse)
-library(leaflet)
-library(kableExtra)
+library(stats)
+
+#Read in Data that contains only "invaded" sites
+Buckthorn_only <- read.csv("Buckthorn_only.csv")
+
+#Create Linear Model using what variables are believed to be best
+Buckthorn <- lm(formula = X.Buckthorn~temp0509+nonveg.100+Canopy.Cover, data= Buckthorn_only)
 knitr::opts_chunk$set(cache=TRUE)  # cache the results for quick compiling
 ```
 
@@ -106,11 +108,7 @@ Add any additional processing steps here.
 
 # Results
 
-[~200 words]
-
-Tables and figures (maps and other graphics) are carefully planned to convey the results of your analysis. Intense exploration and evidence of many trials and failures. The author looked at the data in many different ways before coming to the final presentation of the data.
-
-Show tables, plots, etc. and describe them.
+USE SUMMARY FUNCTION OF BOTH LOGISITC AND LINEAR REGRESSIONS
 
 ```{r, fig.width=6, fig.height=3, fig.cap="Map of completely random data"}
 m <- leaflet(data) %>% 
@@ -120,7 +118,7 @@ m <- leaflet(data) %>%
 m  # a map with the default OSM tile layer
 ```
 
-
+USE GGPLOT OF SDM FUNCTION
 ```{r}
 data %>% 
   ggplot(aes(x=x,y=y,col=category))+
