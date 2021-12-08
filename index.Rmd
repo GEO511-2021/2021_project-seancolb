@@ -153,7 +153,7 @@ extent<-extent(Temp_crop)
 NLCD<- raster("NLCD/gaplf2011lc_v30_ny.tif")
 NLCDresampled <- projectRaster(NLCD,Temp_crop,method = 'ngb')
 NLCD_crop<-crop(x=NLCDresampled, y=NY)%>%mask(mask=NY)
-Plot(NLCD_crop)
+plot(NLCD_crop)
 
 
 #Read in NED
