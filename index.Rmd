@@ -1,105 +1,373 @@
 ---
-title: "My Final Project Template"
-author: Your name here
-subtitle: Subtitle here if desired
+title: "Predicting Drivers of Common Buckthorn"
+author: Sean Colby
+subtitle: Generation of a Buckthorn SDM
+output: html_document
 ---
+
 
 # Introduction
 
-[~ 200 words]
+Common Buckthorn
 
-Clearly stated background and questions / hypotheses / problems being addressed. Sets up the analysis in an interesting and compelling way.
+Background: 
+Common Buckthorn is a deciduous tree/shrub species which was introduced in the late 1800's as an ornamental from Eurasia (Knight et al. 2007). While it may have served a role in wind erosion as an ornamental, it has done a large amount of ecological harm to the Northeastern United States and South Eastern Canada. For example, Common Buckthorn has been known to more than double nitrogen and organic matter content in soils compared to native vegetation resulting in decreased habitat diversity (Klionsky et al. 2011). Furthermore, since Buckthorn is highly competitive having a higher growth rate and fecundity than most native shrubs, it is then able to quickly become a monoculture and out shade native species. To make matters worse, Buckthorn is allelopathic and reduces native species richness and native biomass production (Warren et al. 2017). This matter only becomes more complicated when Buckthorn causes invasional meltdown and results in the faciliation of other invasive species. For instance, buckthorn not only carries oat crown rust which can decimate crops, it also facilitates and carries the insect soybean aphids. These soybean aphids are prey of the invasive Asian lady beetle and can result in spikes in their populations when their populations increase from increased buckthorn (Heimpel et al. 2010)
+
+
+Problem:
+Due to Common Buckthorn being extremely damaging to native ecosystems it is imperative to model its spread in order to attempt to control it. Firstly, it is important to create statistical models that predict which environmental variables best predict Buckthorn's occurence, then using those variables it can be mapped across a given area. While many researchers have done large multiple state prediction models of non-native invasive plant species, to my knowledge no one has done an SDM of Buckthorn for New York State. 
+
+
+Questions: 
+1. What will be the best environmental variables to predict Buckthorn's occurence? 
+2. Will this small scale of an SDM be relatively accurate? 
+3. What can we make of the plot as to what forests/areas appear to be more likely to be invaded than others?
+4. Since we are focusing on habitat suitability, is Buckthorn's presence more likely due to habitat suitability or dispersal methods?
+
 
 # Materials and methods
 
-[~ 200 words]
-
-Narrative: Clear narrative description of the data sources and methods. Includes data from at least two sources that were integrated / merged in R.
-
-Code: The code associated with the project is well organized and easy to follow. Demonstrates mastery of R graphics and functions.
-
-Data: The underlying data are publicly accessible via the web and downloaded/accessed within the Rmd script. If you want to use your own data, you must make it available on a website (e.g. Figshare) so that others are able to re-run your code.
-
-You can do bullets like this:
-
-* The first most important thing
-* The second most important thing
-* The third most important thing
-
-You can do numbers like this:
-
-1. The first most important thing
-2. The second most important thing
-3. The third most important thing
-
-See [http://rmarkdown.rstudio.com/](http://rmarkdown.rstudio.com/) for all the amazing things you can do.
-
-
-Here's my first code chunk.
-```{r}
-1+2
-```
-
-Load any required packages in a code chunk (you may need to install some packages):
+Study Area: 
+This study area is made up of 160 sites that were randomly selected from the following New York counties; Monroe, Livingston, Wyoming, and Ontario. Using these sites, environmental variables of soil, climatic, vegetation, and topographic data were collected.
 
 ```{r, message=F, warning=F}
+#Load Library
+library(spData)
 library(tidyverse)
-library(leaflet)
-library(kableExtra)
-knitr::opts_chunk$set(cache=TRUE)  # cache the results for quick compiling
+library(sf)
+
+#Load Sites
+sites<-read.csv("160_Sites.csv")%>%
+st_as_sf(coords= c("longitude","ï..latitude"),crs=4326)
+data(us_states)
+NY= us_states[us_states$NAME == "New York",]
+NY_SF<-st_as_sf(NY)
+
+ggplot(NY_SF, col = "grey95")+
+  geom_sf()+
+  geom_sf(data= sites, pch=4)
 ```
 
-## Download and clean all required data
-```{r}
-n=20
-data=data.frame(x=runif(n,-180,180),
-                y=runif(n,-60,60),
-                size = runif(n, 5, 20),
-                category = factor(
-                  sample(letters[1:5], n, replace = TRUE)
-                  ),
-                value = rnorm(n))
+## Statistic Methods:
+
+Generating Boosted Regression Tree to Find Predictors for SDM
+
+Data for Logistic Regression: 
+At the sites shown above, the soil, climatic, vegetative, and topographic data was put into the BRT to assess which factors were most significant in predicting power for the model. 
+
+Boosted Regression Codes:
+```{r, message=F, warning=F}
+#Load in Libraries
+library(tidyverse)
+library(stats)
+library(gbm)
+library(dismo)
+
+#Read in Data
+Buckthorn_All_Sites <- read.csv("All_Sites.csv")
+
+#Calculate Boosted Regression Tree Using all Variables to see which are the best predictors
+#Run the BRT
+Boosted_Regression<- gbm.step(data=Buckthorn_All_Sites, gbm.x = 3:34, gbm.y = 2,
+         family = "gaussian", tree.complexity = 5,
+         learning.rate = 0.001, bag.fraction = 0.5)
+
+#Note that gbm.x shows which are the independent variables and gbm.y is the dependent variable which is the presence or absence of Common Buckthorn 
+
 ```
 
-```{r, results='asis'}
-data %>% 
-  slice(1:10) %>% #show only 1:n rows
-  kable(digits=2,align="c")%>% #make table and round to two digits
-  kable_styling(bootstrap_options = 
-                  c("striped", "hover", "condensed", "responsive")) #apply other formatting
+Generating Linear Regressions to See What Effects Buckthorn's Relative Abundance in Site
+
+Data for Linear Regression:
+In order to add depth to the study, I gathered additional variables of Buckthorn's relative abundance within sites as well as predictive variables such as earthworm abundance, canopy light, and edge effects. 
+
+-*Note* this is an additional test to not only create a habitat suitability model of buckthorn, but to also see what environmental variable increases abundance 
+
+Linear Regression Code:
+```{r, message=F, warning=F}
+#Load in the Libraries
+library(tidyverse)
+library(stats)
+
+#Read in Data that contains only "invaded" sites
+Buckthorn_only <- read.csv("Buckthorn_only.csv")
+
+#Create Linear Model using what variables are believed to be best
+Buckthorn <- lm(formula = X.Buckthorn~nonveg.100+Canopy.Cover+Worms+N+GR.0.25+temp0509, data= Buckthorn_only)
 ```
 
-Add any additional processing steps here.
+## Download Data from Open Source and Generate Predictive Model
 
+Background: In order to generate a habitat suitability SDM that maps out probability of presence it requires 2 parts; 1. environmental variables and 2. presence data.
+
+Environmental Data for Predictive Model: The data to generate the SDM came from 3 sources. 
+1. Precipitation and Temperature from PRISM
+2. Topography from USGS digital elevation maps
+3. Land Use and Land Cover from the USGS
+
+Presence Data: The occurrence data of Buckthorn came from two open sources as well as from my own field data. 
+
+Open Sources: iNaturalist and iMapInvasives
+
+Reading in Open Source Data
+```{r, message=F, warning=F}
+#Load Libraries
+library(sp)
+library(sf)
+library(spData)
+library(raster)
+library(maptools)
+library(rgdal)
+library(dismo)
+library(tidyverse)
+library(FedData)
+library(viridis)
+
+
+#Read in Occurrence data from csv and transform to NAD83 Projection
+Occurence <- read.csv("Buckthorn_Occurence.csv")%>%
+  st_as_sf(coords= c("longitude","latitude"),crs= "+proj=longlat +datum=WGS84 +no_defs")%>%
+  st_transform(crs= "+proj=longlat +datum=NAD83 +no_defs")
+
+#Set NY Boundaries
+data(us_states)
+NY= us_states[us_states$NAME == "New York",]
+
+#Filter Out Occurrences that had incorrect lat+long that put them outside of NY
+Occurence<-filter(Occurence, st_contains(NY,Occurence,sparse=F))%>%
+  st_as_sf(coords= c("longitude","latitude"),crs= "+proj=longlat +datum=WGS84 +no_defs")%>%
+  st_transform(crs= "+proj=longlat +datum=NAD83 +no_defs")
+
+#Load Prism Precip
+Prism<-raster("PRISM/PRISM_ppt_30yr_normal_800mM2_annual_bil.bil")
+Precip_crop<-crop(x = Prism, y = NY)%>%mask(mask=NY)
+plot(Precip_crop)
+
+#Load Prism Temp
+Temp<-raster("PRISM/PRISM_tmean_30yr_normal_800mM2_annual_bil.bil")
+Temp_crop<-crop(x = Temp, y = NY)%>%mask(mask=NY)
+plot(Temp_crop)
+extent<-extent(Temp_crop)
+
+#Read in NLCD and Reproject to NAD83
+NLCD<- raster("NLCD/gaplf2011lc_v30_ny.tif")
+NLCDresampled <- projectRaster(NLCD,Temp_crop,method = 'ngb')
+NLCD_crop<-crop(x=NLCDresampled, y=NY)%>%mask(mask=NY)
+plot(NLCD_crop)
+
+
+#Read in NED
+DEM1<- raster("Elevation/DEM1.tif")
+DEM2<- raster("Elevation/DEM2.tif")
+DEM3<- raster("Elevation/DEM3.tif")
+DEM4<- raster("Elevation/DEM4.tif")
+DEM5<- raster("Elevation/DEM5.tif")
+DEM6<- raster("Elevation/DEM6.tif")
+DEM7<- raster("Elevation/DEM7.tif")
+DEM8<- raster("Elevation/DEM8.tif")
+DEM9<- raster("Elevation/DEM9.tif")
+DEM10<- raster("Elevation/DEM10.tif")
+DEM11<- raster("Elevation/DEM11.tif")
+DEM12<- raster("Elevation/DEM12.tif")
+DEM13<- raster("Elevation/DEM13.tif")
+DEM14<- raster("Elevation/DEM14.tif")
+DEM15<- raster("Elevation/DEM15.tif")
+DEM16<- raster("Elevation/DEM16.tif")
+DEM17<- raster("Elevation/DEM17.tif")
+DEM18<- raster("Elevation/DEM18.tif")
+DEM19<- raster("Elevation/DEM19.tif")
+DEM20<- raster("Elevation/DEM20.tif")
+DEM21<- raster("Elevation/DEM21.tif")
+DEM22<- raster("Elevation/DEM22.tif")
+DEM23<- raster("Elevation/DEM23.tif")
+DEM24<- raster("Elevation/DEM24.tif")
+DEM25<- raster("Elevation/DEM25.tif")
+DEM26<- raster("Elevation/DEM26.tif")
+DEM27<- raster("Elevation/DEM27.tif")
+
+#Merge All NY Tiles Together and Reproject into NAD83
+DEM<-merge(DEM1,DEM2,DEM3,DEM4,DEM5,DEM6,DEM7,DEM8,DEM9,DEM10,DEM11,DEM12,DEM13,DEM14,DEM15,DEM16,DEM17,DEM18,DEM19,DEM20,DEM21,DEM22,DEM23,DEM24,DEM25,DEM26,DEM27)
+DEMresampled<-projectRaster(DEM,Temp_crop,method= 'ngb')
+DEM_crop<-crop(x=DEMresampled, y=NY)%>%mask(mask=NY)
+plot(DEM_crop)
+
+#Make a raster stack of environmental data
+bioclim.data<-stack(x = Temp_crop, Precip_crop,NLCD_crop,DEM_crop)
+bioclim.data <- crop(x = bioclim.data, y = NY)%>%mask(mask=NY)
+```
+
+Coding to Generate Initial Habitat Suitability Model:
+```{r, message=F, warning=F}
+#Add long+lat back into Occurrence
+Occurence[,c("longitude","latitude")]= st_coordinates(Occurence)
+
+#Begin to build distribution model
+bc.model <- bioclim(x = bioclim.data, p = st_coordinates(Occurence))
+
+# Drop unused column
+obs.data <- Occurence[, c("latitude", "longitude")]
+
+# Build species distribution model
+bc.model <- bioclim(x = bioclim.data, p = st_coordinates(obs.data))
+
+# Reverse order of columns
+obs.data <- obs.data[, c("longitude", "latitude")]
+
+# Build species distribution model
+bc.model <- bioclim(x = bioclim.data, p = st_coordinates(obs.data))
+
+#Predict estimated presence
+predict.presence <- dismo::predict(object = bc.model, 
+                                   x = bioclim.data, 
+                                   ext = NY)
+
+#Make Predict Presence a data frame for ggplot 2
+prediction<-as.data.frame(predict.presence, xy=TRUE)
+
+#Plot it
+ggplot(NY,col = "grey95")+
+  geom_sf()+
+  geom_sf(data=Occurence, size=1, color="black")+
+  geom_raster(data=prediction, aes(x = x, y = y, fill= layer), alpha=.65)+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  ggtitle("Buckthorn SDM Training Data")+
+  xlab("longitude")+
+  ylab("latitude")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Coding to Fine Tune and Test the Final Model:
+```{r, message=F, warning=F}
+#Create Pseudo Absence Points based upon resolution of climatic data
+bil.files <- list.files(path = "PRISM/", 
+                        pattern = "*.bil$", 
+                        full.names = TRUE)
+
+resolution <- raster(bil.files[3])
+mask<- crop(x = resolution, y = NY)%>%mask(mask=NY)
+
+set.seed(20210707)
+
+#Insert Random Points
+background <- randomPoints(mask = mask,
+                           n= nrow(obs.data),
+                           ext = NY,
+                           extf = 1.25)
+
+#Save rando points as data frame
+Pseudo<- as.data.frame(background)
+
+ggplot(NY,col = "grey95")+
+  geom_sf()+
+  geom_sf(data=Occurence, size=1, color="black")+
+  geom_raster(data=prediction, aes(x = x, y = y, fill= layer), alpha=.65)+
+  geom_point(data= Pseudo, aes(x = x, y = y))+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  ggtitle("Pseudo Absence Points")+
+  xlab("longitude")+
+  ylab("latitude")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+#Testing Time!
+testing.group <- 1
+group.presence <- kfold(x = obs.data, k = 5)
+
+#This sets equal groups
+
+#Set Training and Testing Groups
+presence.train <- obs.data[group.presence != testing.group, ]
+presence.test <- obs.data[group.presence == testing.group, ]
+
+#Training and testing for pseudo points
+group.background <- kfold(x = background, k = 5)
+background.train <- background[group.background != testing.group, ]
+background.test <- background[group.background == testing.group, ]
+
+
+#Build model using training
+bc.model <- bioclim(x = bioclim.data, p = st_coordinates(presence.train))
+predict.presence <- dismo::predict(object = bc.model, 
+                                   x = bioclim.data, 
+                                   ext = NY)
+predict.presence_df<- as.data.frame(predict.presence, xy=TRUE)
+#Testing and Evaluation
+bc.eval <- evaluate(p = presence.test,   # The presence testing data
+                    a = background.test, # The absence testing data
+                    model = bc.model,    # The model we are evaluating
+                    x = bioclim.data)    # Climatic variables for use by model
+```
 # Results
 
-[~200 words]
-
-Tables and figures (maps and other graphics) are carefully planned to convey the results of your analysis. Intense exploration and evidence of many trials and failures. The author looked at the data in many different ways before coming to the final presentation of the data.
-
-Show tables, plots, etc. and describe them.
-
-```{r, fig.width=6, fig.height=3, fig.cap="Map of completely random data"}
-m <- leaflet(data) %>% 
-  addTiles() %>% 
-  addCircleMarkers(~x, ~y, radius = ~size,color = ~as.factor(category)) %>% 
-  addPopups(~x[2], ~y[2], "Random popup")
-m  # a map with the default OSM tile layer
+## Boosted Regression Tree Results
+```{r, message=F, warning=F}
+summary(Boosted_Regression)
 ```
 
+## Linear Regression Results
+```{r, message=F, warning=F}
+summary(Buckthorn)
 
-```{r}
-data %>% 
-  ggplot(aes(x=x,y=y,col=category))+
-  geom_point()
+ggplot(Buckthorn_only, aes(x= Canopy.Cover, y= X.Buckthorn))+
+  geom_point()+
+  geom_smooth(method=lm, span=0.5)+
+  ggtitle("Canopy Cover Impact on Buckthorn")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(Buckthorn_only, aes(x= temp0509, y= X.Buckthorn))+
+  geom_point()+
+  geom_smooth(method=lm, span=0.5)+
+  ggtitle("Temperature Impact on Buckthorn")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(Buckthorn_only, aes(x= Worms, y= X.Buckthorn))+
+  geom_point()+
+  geom_smooth(method=lm, span=0.5)+
+  ggtitle("Earthworm Impact on Buckthorn")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+## Trained and Evaluated Model
+```{r, message=F, warning=F}
+ggplot(NY,col = "grey95")+
+  geom_sf()+
+  geom_sf(data=Occurence, size=1, color="black")+
+  geom_raster(data=predict.presence_df, aes(x = x, y = y, fill= layer), alpha=.65)+
+  scale_fill_viridis(option="magma")+
+  ggtitle("Buckthorn SDM of NY")+
+  xlab("longitude")+
+  ylab("latitude")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+## Model AUC Score
+```{r, message=F, warning=F}
+head(bc.eval@auc)
 ```
 
 # Conclusions
 
-[~200 words]
+## Boosted Regression Tree 
+Looking at the boosted regression tree, there was an average of 1,400 trees generated with a training score that hovered around 0.691-0.724 (*Please Note* these values change per run as it is machine learning). Typically the accepted standard score is that greater than 0.800, therefore further variables must be implemented to increase predictor accuracy. Following the ideas of Golivets et al. 2019, land cover, elevation, slope, defoliation from other invasive species, and proximity to roads and cities should be used to show a mix of invasibility and dispersal factors which may better explain Buckthorn presence. However, using the variables that contribute most to the model there is an apparent trend that most of the explanatory variables are correlated with soil properties and topography indicating an importance of drainage characteristics. Ultimately, the most important variables specifically were terrain.cti (10-12.1 relative influence) which describes how topography controls hydrologic processes, soil.hy.cond  (between 9-10.15 relative influence) which is the hydraulic conductivity, and finally pH (6.6-7.8 relative influence) and precipitation (6.8-7.4 relative influence).
 
-Clear summary adequately describing the results and putting them in context. Discussion of further questions and ways to continue investigation.
+## Linear Regression
+The best variables determining relative abundance within sites were Earth Worm Abundance, Canopy Coverage, and Temperature. Unfortunately, none of the variables were statistically significant as they had p-values of 0.454, 0.115, and 0.374 respectively. Typically below 0.05 is considered significant. However, despite the lack of statistically significant results this is very informative about what controls the relative abundance of buckthorn. While these variables observed are more along the approach of habitat suitability perhaps it is rather dispersal ability that determines relative abundance instead. For instance, in the future a study should be conducted which takes into account the relative abundance of bird and rodent species within a forest as those frugivorous birds and rodents determine the germination of Buckthorn seeds. This is likely to yield better results as the Buckthorn drupes must be broken in order for the seed to begin germination, hence the importance of dispersal. Furthermore, a future study such as this would help build an example of invasional meltdown where certain invasive European bird species such as European starling relative abundance in a forest could be correlated with a higher abundance of Buckthorn. 
+
+## Buckthorn SDM
+In the current state of the habitat suitability SDM there are 4 raster layers to predict the probability of Buckthorn's Occurrence. The current accuracy of the model has an AUC (Area Under the Curve) of 0.780. This accuracy is considered typical as generally greater than 0.800 is deemed to be significant. While this model is a great start further variables will need to be added to increase the accuracy. Looking at areas where the model misses I believe that certain measures of anthropogenic influence will need to be added such as distance to farms, nearest city, or roads as Buckthorn was used ornamentally in the 1800's. Furthermore, as predicted from the boosted regression tree soil properties play a large role in determining where Buckthorn is present so incorporating SSURGO data will greatly improve the accuracy of the model as well. Thus far, this model shows that Buckthorn prefers the warmer, drier, lowland areas of New York. 
+
 
 # References
+Endicott S, Drescher M, and Brenning A. 2017. Modelling the spread of European buckthorn in the Region of Waterloo. Biol Invasions 19: 2993–3011.
 
-All sources are cited in a consistent manner
+Elith, J., Leathwick, J.R., and Hastie, T. 2008. Boosted regression trees - a new technique for modelling ecological data. Journal of Animal Ecology
+
+Golivets, M., C. W. Woodall, and K. F. Wallin. 2019. Functional form and interactions of the drivers of understory non‐native plant invasions in northern us forests. Journal of Applied Ecology 56:2596–2608. 
+
+Heimpel, G. E., L. E. Frelich, D. A. Landis, K. R. Hopper, K. A. Hoelmer, Z. Sezen, M. K. Asplen, and K. Wu. 2010. European buckthorn and Asian soybean aphid as components of an extensive invasional meltdown in North America. Biological Invasions 12:2913–2931. 
+
+Klionsky SM, Amatangelo KL, and Waller DM. 2011. Above- and Belowground Impacts of European Buckthorn (Rhamnus cathartica) on Four Native Forbs. Restoration Ecology 19: 728–37.
+
+Knight KS, Kurylo JS, Endress AG, et al. 2007. Ecology and ecosystem impacts of common buckthorn (Rhamnus cathartica): a review. Biol Invasions 9: 925–37.
+
+Oliver, J. 2021, July 7. https://jcoliver.github.io/learn-r/011-species-distribution-models.html. 
+
+Warren, R. J., A. Labatore, and M. Candeias. 2017. Allelopathic invasive tree (Rhamnus cathartica) alters native plant communities. Plant Ecology 218:1233–1241. 
