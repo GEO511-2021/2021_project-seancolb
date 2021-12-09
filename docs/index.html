@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Sean Colby" />
+
+
+<title>Predicting Drivers of Common Buckthorn</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+      .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Spatial Data Science Final Project</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Predicting Drivers of Common Buckthorn</h1>
+<h3 class="subtitle">Generation of a Buckthorn SDM</h3>
+<h4 class="author">Sean Colby</h4>
+
+</div>
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Common Buckthorn</p>
+<p>Background: Common Buckthorn is a deciduous tree/shrub species which was introduced in the late 1800’s as an ornamental from Eurasia (Knight et al. 2007). While it may have served a role in wind erosion as an ornamental, it has done a large amount of ecological harm to the Northeastern United States and South Eastern Canada. For example, Common Buckthorn has been known to more than double nitrogen and organic matter content in soils compared to native vegetation resulting in decreased habitat diversity (Klionsky et al. 2011). Furthermore, since Buckthorn is highly competitive having a higher growth rate and fecundity than most native shrubs, it is then able to quickly become a monoculture and out shade native species. To make matters worse, Buckthorn is allelopathic and reduces native species richness and native biomass production (Warren et al. 2017). This matter only becomes more complicated when Buckthorn causes invasional meltdown and results in the faciliation of other invasive species. For instance, buckthorn not only carries oat crown rust which can decimate crops, it also facilitates and carries the insect soybean aphids. These soybean aphids are prey of the invasive Asian lady beetle and can result in spikes in their populations when their populations increase from increased buckthorn (Heimpel et al. 2010)</p>
+<p>Problem: Due to Common Buckthorn being extremely damaging to native ecosystems it is imperative to model its spread in order to attempt to control it. Firstly, it is important to create statistical models that predict which environmental variables best predict Buckthorn’s occurence, then using those variables it can be mapped across a given area. While many researchers have done large multiple state prediction models of non-native invasive plant species, to my knowledge no one has done an SDM of Buckthorn for New York State.</p>
+<p>Questions: 1. What will be the best environmental variables to predict Buckthorn’s occurence? 2. Will this small scale of an SDM be relatively accurate? 3. What can we make of the plot as to what forests/areas appear to be more likely to be invaded than others? 4. Since we are focusing on habitat suitability, is Buckthorn’s presence more likely due to habitat suitability or dispersal methods?</p>
+</div>
+<div id="materials-and-methods" class="section level1">
+<h1>Materials and methods</h1>
+<p>Study Area: This study area is made up of 160 sites that were randomly selected from the following New York counties; Monroe, Livingston, Wyoming, and Ontario. Using these sites, environmental variables of soil, climatic, vegetation, and topographic data were collected.</p>
+<pre class="r"><code>#Load Library
+library(spData)
+library(tidyverse)
+library(sf)
+
+#Load Sites
+sites&lt;-read.csv(&quot;160_Sites.csv&quot;)%&gt;%
+st_as_sf(coords= c(&quot;longitude&quot;,&quot;ï..latitude&quot;),crs=4326)
+data(us_states)
+NY= us_states[us_states$NAME == &quot;New York&quot;,]
+NY_SF&lt;-st_as_sf(NY)
+
+ggplot(NY_SF, col = &quot;grey95&quot;)+
+  geom_sf()+
+  geom_sf(data= sites, pch=4)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<div id="statistic-methods" class="section level2">
+<h2>Statistic Methods:</h2>
+<p>Generating Boosted Regression Tree to Find Predictors for SDM</p>
+<p>Data for Logistic Regression: At the sites shown above, the soil, climatic, vegetative, and topographic data was put into the BRT to assess which factors were most significant in predicting power for the model.</p>
+<p>Boosted Regression Codes:</p>
+<pre class="r"><code>#Load in Libraries
+library(tidyverse)
+library(stats)
+library(gbm)
+library(dismo)
+
+#Read in Data
+Buckthorn_All_Sites &lt;- read.csv(&quot;All_Sites.csv&quot;)
+
+#Calculate Boosted Regression Tree Using all Variables to see which are the best predictors
+#Run the BRT
+Boosted_Regression&lt;- gbm.step(data=Buckthorn_All_Sites, gbm.x = 3:34, gbm.y = 2,
+         family = &quot;gaussian&quot;, tree.complexity = 5,
+         learning.rate = 0.001, bag.fraction = 0.5)</code></pre>
+<pre><code>## 
+##  
+##  GBM STEP - version 2.9 
+##  
+## Performing cross-validation optimisation of a boosted regression tree model 
+## for Buckthorn and using a family of gaussian 
+## Using 149 observations and 32 predictors 
+## creating 10 initial models of 50 trees 
+## 
+##  folds are unstratified 
+## total mean deviance =  0.1211 
+## tolerance is fixed at  1e-04 
+## ntrees resid. dev. 
+## 50    0.122 
+## now adding trees... 
+## 100   0.1214 
+## 150   0.1209 
+## 200   0.1204 
+## 250   0.1201 
+## 300   0.1198 
+## 350   0.1195 
+## 400   0.1191 
+## 450   0.1189 
+## 500   0.1185 
+## 550   0.1183 
+## 600   0.1182 
+## 650   0.118 
+## 700   0.1179 
+## 750   0.1177 
+## 800   0.1176 
+## 850   0.1175 
+## 900   0.1173 
+## 950   0.1173 
+## 1000   0.1173 
+## 1050   0.1174 
+## 1100   0.1174 
+## 1150   0.1173 
+## 1200   0.1172 
+## 1250   0.1173 
+## 1300   0.1173 
+## 1350   0.1174 
+## 1400   0.1174 
+## 1450   0.1174 
+## 1500   0.1173 
+## 1550   0.1175 
+## 1600   0.1175 
+## 1650   0.1176</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<pre><code>## 
+## mean total deviance = 0.121 
+## mean residual deviance = 0.087 
+##  
+## estimated cv deviance = 0.117 ; se = 0.019 
+##  
+## training data correlation = 0.704 
+## cv correlation =  0.244 ; se = 0.076 
+##  
+## elapsed time -  0.16 minutes</code></pre>
+<pre class="r"><code>#Note that gbm.x shows which are the independent variables and gbm.y is the dependent variable which is the presence or absence of Common Buckthorn </code></pre>
+<p>Generating Linear Regressions to See What Effects Buckthorn’s Relative Abundance in Site</p>
+<p>Data for Linear Regression: In order to add depth to the study, I gathered additional variables of Buckthorn’s relative abundance within sites as well as predictive variables such as earthworm abundance, canopy light, and edge effects.</p>
+<p>-<em>Note</em> this is an additional test to not only create a habitat suitability model of buckthorn, but to also see what environmental variable increases abundance</p>
+<p>Linear Regression Code:</p>
+<pre class="r"><code>#Load in the Libraries
+library(tidyverse)
+library(stats)
+
+#Read in Data that contains only &quot;invaded&quot; sites
+Buckthorn_only &lt;- read.csv(&quot;Buckthorn_only.csv&quot;)
+
+#Create Linear Model using what variables are believed to be best
+Buckthorn &lt;- lm(formula = X.Buckthorn~nonveg.100+Canopy.Cover+Worms+N+GR.0.25+temp0509, data= Buckthorn_only)</code></pre>
+</div>
+<div id="download-data-from-open-source-and-generate-predictive-model" class="section level2">
+<h2>Download Data from Open Source and Generate Predictive Model</h2>
+<p>Background: In order to generate a habitat suitability SDM that maps out probability of presence it requires 2 parts; 1. environmental variables and 2. presence data.</p>
+<p>Environmental Data for Predictive Model: The data to generate the SDM came from 3 sources. 1. Precipitation and Temperature from PRISM 2. Topography from USGS digital elevation maps 3. Land Use and Land Cover from the USGS</p>
+<p>Presence Data: The occurrence data of Buckthorn came from two open sources as well as from my own field data.</p>
+<p>Open Sources: iNaturalist and iMapInvasives</p>
+<p>Reading in Open Source Data</p>
+<pre class="r"><code>#Load Libraries
+library(sp)
+library(sf)
+library(spData)
+library(raster)
+library(maptools)
+library(rgdal)
+library(dismo)
+library(tidyverse)
+library(FedData)
+library(viridis)
+
+
+#Read in Occurrence data from csv and transform to NAD83 Projection
+Occurence &lt;- read.csv(&quot;Buckthorn_Occurence.csv&quot;)%&gt;%
+  st_as_sf(coords= c(&quot;longitude&quot;,&quot;latitude&quot;),crs= &quot;+proj=longlat +datum=WGS84 +no_defs&quot;)%&gt;%
+  st_transform(crs= &quot;+proj=longlat +datum=NAD83 +no_defs&quot;)
+
+#Set NY Boundaries
+data(us_states)
+NY= us_states[us_states$NAME == &quot;New York&quot;,]
+
+#Filter Out Occurrences that had incorrect lat+long that put them outside of NY
+Occurence&lt;-filter(Occurence, st_contains(NY,Occurence,sparse=F))%&gt;%
+  st_as_sf(coords= c(&quot;longitude&quot;,&quot;latitude&quot;),crs= &quot;+proj=longlat +datum=WGS84 +no_defs&quot;)%&gt;%
+  st_transform(crs= &quot;+proj=longlat +datum=NAD83 +no_defs&quot;)
+
+#Load Prism Precip
+Prism&lt;-raster(&quot;PRISM/PRISM_ppt_30yr_normal_800mM2_annual_bil.bil&quot;)
+Precip_crop&lt;-crop(x = Prism, y = NY)%&gt;%mask(mask=NY)
+plot(Precip_crop)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>#Load Prism Temp
+Temp&lt;-raster(&quot;PRISM/PRISM_tmean_30yr_normal_800mM2_annual_bil.bil&quot;)
+Temp_crop&lt;-crop(x = Temp, y = NY)%&gt;%mask(mask=NY)
+plot(Temp_crop)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-2.png" width="672" /></p>
+<pre class="r"><code>extent&lt;-extent(Temp_crop)
+
+#Read in NLCD and Reproject to NAD83
+NLCD&lt;- raster(&quot;NLCD/gaplf2011lc_v30_ny.tif&quot;)
+NLCDresampled &lt;- projectRaster(NLCD,Temp_crop,method = &#39;ngb&#39;)
+NLCD_crop&lt;-crop(x=NLCDresampled, y=NY)%&gt;%mask(mask=NY)
+plot(NLCD_crop)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-3.png" width="672" /></p>
+<pre class="r"><code>#Read in NED
+DEM1&lt;- raster(&quot;Elevation/DEM1.tif&quot;)
+DEM2&lt;- raster(&quot;Elevation/DEM2.tif&quot;)
+DEM3&lt;- raster(&quot;Elevation/DEM3.tif&quot;)
+DEM4&lt;- raster(&quot;Elevation/DEM4.tif&quot;)
+DEM5&lt;- raster(&quot;Elevation/DEM5.tif&quot;)
+DEM6&lt;- raster(&quot;Elevation/DEM6.tif&quot;)
+DEM7&lt;- raster(&quot;Elevation/DEM7.tif&quot;)
+DEM8&lt;- raster(&quot;Elevation/DEM8.tif&quot;)
+DEM9&lt;- raster(&quot;Elevation/DEM9.tif&quot;)
+DEM10&lt;- raster(&quot;Elevation/DEM10.tif&quot;)
+DEM11&lt;- raster(&quot;Elevation/DEM11.tif&quot;)
+DEM12&lt;- raster(&quot;Elevation/DEM12.tif&quot;)
+DEM13&lt;- raster(&quot;Elevation/DEM13.tif&quot;)
+DEM14&lt;- raster(&quot;Elevation/DEM14.tif&quot;)
+DEM15&lt;- raster(&quot;Elevation/DEM15.tif&quot;)
+DEM16&lt;- raster(&quot;Elevation/DEM16.tif&quot;)
+DEM17&lt;- raster(&quot;Elevation/DEM17.tif&quot;)
+DEM18&lt;- raster(&quot;Elevation/DEM18.tif&quot;)
+DEM19&lt;- raster(&quot;Elevation/DEM19.tif&quot;)
+DEM20&lt;- raster(&quot;Elevation/DEM20.tif&quot;)
+DEM21&lt;- raster(&quot;Elevation/DEM21.tif&quot;)
+DEM22&lt;- raster(&quot;Elevation/DEM22.tif&quot;)
+DEM23&lt;- raster(&quot;Elevation/DEM23.tif&quot;)
+DEM24&lt;- raster(&quot;Elevation/DEM24.tif&quot;)
+DEM25&lt;- raster(&quot;Elevation/DEM25.tif&quot;)
+DEM26&lt;- raster(&quot;Elevation/DEM26.tif&quot;)
+DEM27&lt;- raster(&quot;Elevation/DEM27.tif&quot;)
+
+#Merge All NY Tiles Together and Reproject into NAD83
+DEM&lt;-merge(DEM1,DEM2,DEM3,DEM4,DEM5,DEM6,DEM7,DEM8,DEM9,DEM10,DEM11,DEM12,DEM13,DEM14,DEM15,DEM16,DEM17,DEM18,DEM19,DEM20,DEM21,DEM22,DEM23,DEM24,DEM25,DEM26,DEM27)
+DEMresampled&lt;-projectRaster(DEM,Temp_crop,method= &#39;ngb&#39;)
+DEM_crop&lt;-crop(x=DEMresampled, y=NY)%&gt;%mask(mask=NY)
+plot(DEM_crop)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-4.png" width="672" /></p>
+<pre class="r"><code>#Make a raster stack of environmental data
+bioclim.data&lt;-stack(x = Temp_crop, Precip_crop,NLCD_crop,DEM_crop)
+bioclim.data &lt;- crop(x = bioclim.data, y = NY)%&gt;%mask(mask=NY)</code></pre>
+<p>Coding to Generate Initial Habitat Suitability Model:</p>
+<pre class="r"><code>#Add long+lat back into Occurrence
+Occurence[,c(&quot;longitude&quot;,&quot;latitude&quot;)]= st_coordinates(Occurence)
+
+#Begin to build distribution model
+bc.model &lt;- bioclim(x = bioclim.data, p = st_coordinates(Occurence))
+
+# Drop unused column
+obs.data &lt;- Occurence[, c(&quot;latitude&quot;, &quot;longitude&quot;)]
+
+# Build species distribution model
+bc.model &lt;- bioclim(x = bioclim.data, p = st_coordinates(obs.data))
+
+# Reverse order of columns
+obs.data &lt;- obs.data[, c(&quot;longitude&quot;, &quot;latitude&quot;)]
+
+# Build species distribution model
+bc.model &lt;- bioclim(x = bioclim.data, p = st_coordinates(obs.data))
+
+#Predict estimated presence
+predict.presence &lt;- dismo::predict(object = bc.model, 
+                                   x = bioclim.data, 
+                                   ext = NY)
+
+#Make Predict Presence a data frame for ggplot 2
+prediction&lt;-as.data.frame(predict.presence, xy=TRUE)
+
+#Plot it
+ggplot(NY,col = &quot;grey95&quot;)+
+  geom_sf()+
+  geom_sf(data=Occurence, size=1, color=&quot;black&quot;)+
+  geom_raster(data=prediction, aes(x = x, y = y, fill= layer), alpha=.65)+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  ggtitle(&quot;Buckthorn SDM Training Data&quot;)+
+  xlab(&quot;longitude&quot;)+
+  ylab(&quot;latitude&quot;)+
+  theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Coding to Fine Tune and Test the Final Model:</p>
+<pre class="r"><code>#Create Pseudo Absence Points based upon resolution of climatic data
+bil.files &lt;- list.files(path = &quot;PRISM/&quot;, 
+                        pattern = &quot;*.bil$&quot;, 
+                        full.names = TRUE)
+
+resolution &lt;- raster(bil.files[3])
+mask&lt;- crop(x = resolution, y = NY)%&gt;%mask(mask=NY)
+
+set.seed(20210707)
+
+#Insert Random Points
+background &lt;- randomPoints(mask = mask,
+                           n= nrow(obs.data),
+                           ext = NY,
+                           extf = 1.25)
+
+#Save rando points as data frame
+Pseudo&lt;- as.data.frame(background)
+
+ggplot(NY,col = &quot;grey95&quot;)+
+  geom_sf()+
+  geom_sf(data=Occurence, size=1, color=&quot;black&quot;)+
+  geom_raster(data=prediction, aes(x = x, y = y, fill= layer), alpha=.65)+
+  geom_point(data= Pseudo, aes(x = x, y = y))+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  ggtitle(&quot;Pseudo Absence Points&quot;)+
+  xlab(&quot;longitude&quot;)+
+  ylab(&quot;latitude&quot;)+
+  theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<pre class="r"><code>#Testing Time!
+testing.group &lt;- 1
+group.presence &lt;- kfold(x = obs.data, k = 5)
+
+#This sets equal groups
+
+#Set Training and Testing Groups
+presence.train &lt;- obs.data[group.presence != testing.group, ]
+presence.test &lt;- obs.data[group.presence == testing.group, ]
+
+#Training and testing for pseudo points
+group.background &lt;- kfold(x = background, k = 5)
+background.train &lt;- background[group.background != testing.group, ]
+background.test &lt;- background[group.background == testing.group, ]
+
+
+#Build model using training
+bc.model &lt;- bioclim(x = bioclim.data, p = st_coordinates(presence.train))
+predict.presence &lt;- dismo::predict(object = bc.model, 
+                                   x = bioclim.data, 
+                                   ext = NY)
+predict.presence_df&lt;- as.data.frame(predict.presence, xy=TRUE)
+#Testing and Evaluation
+bc.eval &lt;- evaluate(p = presence.test,   # The presence testing data
+                    a = background.test, # The absence testing data
+                    model = bc.model,    # The model we are evaluating
+                    x = bioclim.data)    # Climatic variables for use by model</code></pre>
+</div>
+</div>
+<div id="results" class="section level1">
+<h1>Results</h1>
+<div id="boosted-regression-tree-results" class="section level2">
+<h2>Boosted Regression Tree Results</h2>
+<pre class="r"><code>summary(Boosted_Regression)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre><code>##                               var    rel.inf
+## terrain.cti           terrain.cti 11.5891985
+## soil.hyd.cond       soil.hyd.cond  9.5479940
+## Sd4                           Sd4  7.9259167
+## prec0509                 prec0509  7.4058631
+## pH                             pH  7.2848381
+## depthrestrictive depthrestrictive  5.5545717
+## bulkdensity           bulkdensity  5.4321929
+## nonveg.100             nonveg.100  4.1336965
+## Clay                         Clay  3.9695508
+## temp0509                 temp0509  3.2846220
+## aws100cm                 aws100cm  3.0916035
+## terrain.slope       terrain.slope  2.9859545
+## Sd2                           Sd2  2.9547522
+## N                               N  2.5960254
+## Silt                         Silt  2.4894625
+## Age                           Age  1.9581256
+## Sd3                           Sd3  1.8311469
+## LOI                           LOI  1.8292024
+## N.Patches500         N.Patches500  1.8078724
+## Depth                       Depth  1.6741893
+## Sd1                           Sd1  1.3867552
+## trees.veg100         trees.veg100  1.3781866
+## GR0.25                     GR0.25  1.3755050
+## GR0.50                     GR0.50  1.1604439
+## Sand                         Sand  1.0201409
+## trees.veg50           trees.veg50  0.9914739
+## deer.take               deer.take  0.9208591
+## P                               P  0.8386191
+## soil.erod.kffact soil.erod.kffact  0.6972556
+## drainageclass       drainageclass  0.6284127
+## GR1.00                     GR1.00  0.2555689
+## nonveg.50               nonveg.50  0.0000000</code></pre>
+</div>
+<div id="linear-regression-results" class="section level2">
+<h2>Linear Regression Results</h2>
+<pre class="r"><code>summary(Buckthorn)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = X.Buckthorn ~ nonveg.100 + Canopy.Cover + Worms + 
+##     N + GR.0.25 + temp0509, data = Buckthorn_only)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.28846 -0.11542  0.01336  0.06639  0.35594 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)  -2.246227   1.450080  -1.549    0.156
+## nonveg.100    0.003845   0.005546   0.693    0.506
+## Canopy.Cover  0.020174   0.011554   1.746    0.115
+## Worms        -0.001269   0.001622  -0.783    0.454
+## N            -0.003802   0.011330  -0.336    0.745
+## GR.0.25       0.264712   0.515056   0.514    0.620
+## temp0509      0.120185   0.128355   0.936    0.374
+## 
+## Residual standard error: 0.2383 on 9 degrees of freedom
+## Multiple R-squared:  0.4098, Adjusted R-squared:  0.01641 
+## F-statistic: 1.042 on 6 and 9 DF,  p-value: 0.4587</code></pre>
+<pre class="r"><code>ggplot(Buckthorn_only, aes(x= Canopy.Cover, y= X.Buckthorn))+
+  geom_point()+
+  geom_smooth(method=lm, span=0.5)+
+  ggtitle(&quot;Canopy Cover Impact on Buckthorn&quot;)+
+  theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(Buckthorn_only, aes(x= temp0509, y= X.Buckthorn))+
+  geom_point()+
+  geom_smooth(method=lm, span=0.5)+
+  ggtitle(&quot;Temperature Impact on Buckthorn&quot;)+
+  theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(Buckthorn_only, aes(x= Worms, y= X.Buckthorn))+
+  geom_point()+
+  geom_smooth(method=lm, span=0.5)+
+  ggtitle(&quot;Earthworm Impact on Buckthorn&quot;)+
+  theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-3.png" width="672" /></p>
+</div>
+<div id="trained-and-evaluated-model" class="section level2">
+<h2>Trained and Evaluated Model</h2>
+<pre class="r"><code>ggplot(NY,col = &quot;grey95&quot;)+
+  geom_sf()+
+  geom_sf(data=Occurence, size=1, color=&quot;black&quot;)+
+  geom_raster(data=predict.presence_df, aes(x = x, y = y, fill= layer), alpha=.65)+
+  scale_fill_viridis(option=&quot;magma&quot;)+
+  ggtitle(&quot;Buckthorn SDM of NY&quot;)+
+  xlab(&quot;longitude&quot;)+
+  ylab(&quot;latitude&quot;)+
+  theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.png" width="672" /> ## Model AUC Score</p>
+<pre class="r"><code>head(bc.eval@auc)</code></pre>
+<pre><code>## [1] 0.7802242</code></pre>
+</div>
+</div>
+<div id="conclusions" class="section level1">
+<h1>Conclusions</h1>
+<div id="boosted-regression-tree" class="section level2">
+<h2>Boosted Regression Tree</h2>
+<p>Looking at the boosted regression tree, there was an average of 1,400 trees generated with a training score that hovered around 0.691-0.724 (<em>Please Note</em> these values change per run as it is machine learning). Typically the accepted standard score is that greater than 0.800, therefore further variables must be implemented to increase predictor accuracy. Following the ideas of Golivets et al. 2019, land cover, elevation, slope, defoliation from other invasive species, and proximity to roads and cities should be used to show a mix of invasibility and dispersal factors which may better explain Buckthorn presence. However, using the variables that contribute most to the model there is an apparent trend that most of the explanatory variables are correlated with soil properties and topography indicating an importance of drainage characteristics. Ultimately, the most important variables specifically were terrain.cti (10-12.1 relative influence) which describes how topography controls hydrologic processes, soil.hy.cond (between 9-10.15 relative influence) which is the hydraulic conductivity, and finally pH (6.6-7.8 relative influence) and precipitation (6.8-7.4 relative influence).</p>
+</div>
+<div id="linear-regression" class="section level2">
+<h2>Linear Regression</h2>
+<p>The best variables determining relative abundance within sites were Earth Worm Abundance, Canopy Coverage, and Temperature. Unfortunately, none of the variables were statistically significant as they had p-values of 0.454, 0.115, and 0.374 respectively. Typically below 0.05 is considered significant. However, despite the lack of statistically significant results this is very informative about what controls the relative abundance of buckthorn. While these variables observed are more along the approach of habitat suitability perhaps it is rather dispersal ability that determines relative abundance instead. For instance, in the future a study should be conducted which takes into account the relative abundance of bird and rodent species within a forest as those frugivorous birds and rodents determine the germination of Buckthorn seeds. This is likely to yield better results as the Buckthorn drupes must be broken in order for the seed to begin germination, hence the importance of dispersal. Furthermore, a future study such as this would help build an example of invasional meltdown where certain invasive European bird species such as European starling relative abundance in a forest could be correlated with a higher abundance of Buckthorn.</p>
+</div>
+<div id="buckthorn-sdm" class="section level2">
+<h2>Buckthorn SDM</h2>
+<p>In the current state of the habitat suitability SDM there are 4 raster layers to predict the probability of Buckthorn’s Occurrence. The current accuracy of the model has an AUC (Area Under the Curve) of 0.780. This accuracy is considered typical as generally greater than 0.800 is deemed to be significant. While this model is a great start further variables will need to be added to increase the accuracy. Looking at areas where the model misses I believe that certain measures of anthropogenic influence will need to be added such as distance to farms, nearest city, or roads as Buckthorn was used ornamentally in the 1800’s. Furthermore, as predicted from the boosted regression tree soil properties play a large role in determining where Buckthorn is present so incorporating SSURGO data will greatly improve the accuracy of the model as well. Thus far, this model shows that Buckthorn prefers the warmer, drier, lowland areas of New York.</p>
+</div>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<p>Endicott S, Drescher M, and Brenning A. 2017. Modelling the spread of European buckthorn in the Region of Waterloo. Biol Invasions 19: 2993–3011.</p>
+<p>Elith, J., Leathwick, J.R., and Hastie, T. 2008. Boosted regression trees - a new technique for modelling ecological data. Journal of Animal Ecology</p>
+<p>Golivets, M., C. W. Woodall, and K. F. Wallin. 2019. Functional form and interactions of the drivers of understory non‐native plant invasions in northern us forests. Journal of Applied Ecology 56:2596–2608.</p>
+<p>Heimpel, G. E., L. E. Frelich, D. A. Landis, K. R. Hopper, K. A. Hoelmer, Z. Sezen, M. K. Asplen, and K. Wu. 2010. European buckthorn and Asian soybean aphid as components of an extensive invasional meltdown in North America. Biological Invasions 12:2913–2931.</p>
+<p>Klionsky SM, Amatangelo KL, and Waller DM. 2011. Above- and Belowground Impacts of European Buckthorn (Rhamnus cathartica) on Four Native Forbs. Restoration Ecology 19: 728–37.</p>
+<p>Knight KS, Kurylo JS, Endress AG, et al. 2007. Ecology and ecosystem impacts of common buckthorn (Rhamnus cathartica): a review. Biol Invasions 9: 925–37.</p>
+<p>Oliver, J. 2021, July 7. <a href="https://jcoliver.github.io/learn-r/011-species-distribution-models.html" class="uri">https://jcoliver.github.io/learn-r/011-species-distribution-models.html</a>.</p>
+<p>Warren, R. J., A. Labatore, and M. Candeias. 2017. Allelopathic invasive tree (Rhamnus cathartica) alters native plant communities. Plant Ecology 218:1233–1241.</p>
+</div>
+
+<!-- give the footer some space -->
+<br/>
+<br/>
+
+<footer id="site-footer">
+  <div id="footer1">
+  This website is a project for Adam Wilson's <a href="https://wilsonlab.io/GEO511"><i> Spatial Data Science (GEO511) </i></a>Course at the University at Buffalo
+  </div>
+  <div id="footer2">
+  <a rel="license" property="http://creativecommons.org/ns#license"
+  href="http://creativecommons.org/licenses/by/4.0/" ><img src="img/cc-by.svg" alt="cc-by"/></a> 
+  </div>
+</footer>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+
+</body>
+</html>
